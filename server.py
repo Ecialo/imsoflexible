@@ -1,3 +1,4 @@
+#! /usr/bin/python2
 import tornado
 import tornado.ioloop
 import tornado.web
@@ -5,7 +6,7 @@ import os, uuid
 
 from rolling_shutter import rolling_shutter
 
-UPLOAD_DIR = "uploads/"
+UPLOAD_DIR = "upload/"
 BUF_SIZE = 4096
 
 
@@ -38,6 +39,8 @@ class Upload(tornado.web.RequestHandler):
                 if not data:
                     break
                 self.write(data)
+        os.remove(path_src)
+        os.remove(path_dst)
         self.finish()
 
 
