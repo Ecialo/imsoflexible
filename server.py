@@ -17,6 +17,9 @@ class Userform(tornado.web.RequestHandler):
 
 class Upload(tornado.web.RequestHandler):
     def post(self):
+
+        # TODO: Catch exceptions and delete bad sources
+
         file_info = self.request.files['filearg'][0]
         extn = os.path.splitext(file_info['filename'])[1]
         name = str(uuid.uuid4())
@@ -29,7 +32,11 @@ class Upload(tornado.web.RequestHandler):
         fh = open(path_src, 'wb')
         fh.write(file_info['body'])
         fh.close()
-        rolling_shutter(path_src, result_filename=path_dst)
+
+        roughness = int(self.get_argument("roughness", 1))
+        scale = float(self.get_argument("scale", 1))
+
+        rolling_shutter(path_src, result_filename=path_dst, roughness=roughness, scale=scale)
 
         self.set_header('Content-Type', 'application/octet-stream')
         self.set_header('Content-Disposition', 'attachment; filename=' + file_info['filename'])
@@ -51,5 +58,5 @@ application = tornado.web.Application([
 
 
 if __name__ == "__main__":
-    application.listen(8888)
+    application.listen(8081, address='127.0.0.1')
     tornado.ioloop.IOLoop.instance().start()

@@ -1,14 +1,28 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-<title>Upload Form</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>I'm so flexible!</title>
+    <link rel="stylesheet" type="text/css" href="./static/imsf.css">
 </head>
+
 <body>
 <p><h1>I'm so flexible!</h1></p>
-<form enctype="multipart/form-data" action="/upload" method="post">
-File: <input type="file" name="filearg" />
-<br />
-<br />
-<input type="submit" value="upload" />
+<form enctype="multipart/form-data" action="./upload" method="post">
+    File: <input type="file" name="filearg"><br>
+    <table>
+        <tr><td style="text-align: center">
+            Roughness:
+            <br><input type="range" name="roughness" min="1" max="10" step="1" value="5" orient="vertical" oninput="roughness_out.value = this.value">
+            <br><output name="roughness_out">5</output>
+        </td><td style="text-align: center">
+            Scale:
+            <br><input type="range" name="scale" min="0.05" max="1" step="0.01" value="1" orient="vertical" oninput="scale_out.value = this.value">
+            <br><output name="scale_out">1</output>
+        </td></tr>
+    </table>
+<input type="submit" value="GO!">
 </form>
 (Скоро тут еще будет блекджек и шлюхи)
+</body>
+
+</html>
