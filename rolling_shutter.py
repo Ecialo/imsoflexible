@@ -67,7 +67,7 @@ def configure_tools(frame, roughness, scale, maxsize, framerate, result_filename
     return maxsize, appender, composer, cutter, r, g, b, result_video
 
 
-def rolling_shutter(filename, roughness=1, scale=1.0, maxsize=None, framerate=25, result_filename=None):
+def unblockable_rolling_shutter(filename, roughness=1, scale=1.0, maxsize=None, framerate=25, result_filename=None):
     """
     Накладывает на видео эффект rolling shatter и сохраняет результат
 
@@ -114,6 +114,7 @@ def rolling_shutter(filename, roughness=1, scale=1.0, maxsize=None, framerate=25
                 composer(r)
             ])
             result_video.write(new_frame)
+            yield
         else:
             break
     for i in xrange(int(math.ceil(float(maxsize)/roughness))):
@@ -129,8 +130,14 @@ def rolling_shutter(filename, roughness=1, scale=1.0, maxsize=None, framerate=25
             composer(r)
         ])
         result_video.write(new_frame)
+        yield
     video.release()
     result_video.release()
+
+
+def rolling_shutter(filename, roughness=1, scale=1.0, maxsize=None, framerate=25, result_filename=None):
+    reduce(lambda _, __: None, unblockable_rolling_shutter(filename, roughness, scale, maxsize, framerate, result_filename), None)
+
 
 if __name__ == '__main__':
     import argparse
