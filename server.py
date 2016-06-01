@@ -5,14 +5,20 @@ import tornado.ioloop
 from tornado import gen
 from tornado.queues import Queue
 import tornado.web
-import os, uuid
+import os, uuid, random, string
 from rolling_shutter import unblockable_rolling_shutter
 
 UPLOAD_DIR = "upload/"
 BUF_SIZE = 4096
+SID_LEN = 32
 
 
 q = Queue()
+task_list = []
+
+
+def sid_gen():
+    return ''.join(random.SystemRandom().choice(string.hexdigits) for _ in range(SID_LEN))
 
 
 @gen.coroutine
@@ -20,10 +26,12 @@ def watch_queue():
     while True:
         item = yield q.get()
         try:
-            item.next()
-            yield gen.moment
-            q.put(item)
+            item["state"] = 1
+            while True:
+                item["gen"].next()
+                yield gen.moment
         except StopIteration:
+            item["state"] = 2
             print "processing completed"
         finally:
             q.task_done()
@@ -32,21 +40,36 @@ def watch_queue():
 class Userform(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self):
-        self.render("form.html")
+        tasks = None
 
+        sid = self.get_cookie("sid")
+        if sid:
+            tasks = []
 
-class Upload(tornado.web.RequestHandler):
+            for task in task_list:
+                if not task["sid"] == sid:
+                    continue
+                tasks.append(task)
+
+        self.render("form.html", tasks=tasks)
+
     @gen.coroutine
     def post(self):
+
+        sid = self.get_cookie("sid")
+        if not sid:
+            sid = sid_gen()
+            self.set_cookie("sid", sid)
+
+        task_id = str(uuid.uuid4())
 
         # TODO: Catch exceptions and delete bad sources
 
         file_info = self.request.files['filearg'][0]
         extn = os.path.splitext(file_info['filename'])[1]
-        name = str(uuid.uuid4())
 
-        path_src = UPLOAD_DIR + name + "_src" + extn
-        path_dst = UPLOAD_DIR + name + "_dst" + ".avi"
+        path_src = UPLOAD_DIR + task_id + "_src" + extn
+        path_dst = UPLOAD_DIR + task_id + "_dst" + ".avi"
 
         print path_src, path_dst
 
@@ -57,20 +80,53 @@ class Upload(tornado.web.RequestHandler):
         roughness = int(self.get_argument("roughness", 1))
         scale = float(self.get_argument("scale", 1))
 
-        q.put(unblockable_rolling_shutter(path_src, result_filename=path_dst, roughness=roughness, scale=scale))
+        handler = unblockable_rolling_shutter(path_src, result_filename=path_dst, roughness=roughness, scale=scale)
+        info = {
+            "gen": handler,
+            "sid": sid,
+            "id": task_id,
+            "src": path_src,
+            "dst": path_dst,
+            "name": file_info['filename'],
+            "state": 0,  # set 1 when task is first in queue, set 2 when processing is completed
+            "progress": 0,  # from 0 to 100
+        }
+        task_list.append(info)
+        q.put(info)
         print "processing started..."
 
-        # self.set_header('Content-Type', 'application/octet-stream')
-        # self.set_header('Content-Disposition', 'attachment; filename=' + file_info['filename'])
-        # with open(path_dst, 'r') as f:
-        #     while True:
-        #         data = f.read(BUF_SIZE)
-        #         if not data:
-        #             break
-        #         self.write(data)
-        # os.remove(path_src)
-        # os.remove(path_dst)
-        self.finish()
+        self.redirect("./")
+
+
+class GetFile(tornado.web.RequestHandler):
+    def get(self):
+        sid = self.get_cookie("sid")
+        task_id = self.get_argument("id")
+
+        for task in task_list:
+            if not task["id"] == task_id:
+                continue
+
+            if not task["sid"] == sid:
+                self.set_status(403)
+                self.finish("<html><body>403: FORBIDDEN</body></html>")
+
+            self.set_header('Content-Type', 'application/octet-stream')
+            self.set_header('Content-Disposition', 'attachment; filename=' + task["name"])
+            with open(task["dst"], 'r') as f:
+                while True:
+                    data = f.read(BUF_SIZE)
+                    if not data:
+                        break
+                    self.write(data)
+            self.finish()
+            task_list.remove(task)
+            os.remove(task["src"])
+            os.remove(task["dst"])
+            return
+
+        self.set_status(404)
+        self.finish("<html><body>404: NOT FOUND</body></html>")
 
 
 if __name__ == "__main__":
@@ -83,7 +139,7 @@ if __name__ == "__main__":
     tornado.ioloop.IOLoop.instance().add_callback(watch_queue)
     application = tornado.web.Application([
         (r"/", Userform),
-        (r"/upload", Upload),
+        (r"/file", GetFile),
     ], debug=True)
     application.listen(args.port, address=args.address)
     tornado.ioloop.IOLoop.instance().start()
