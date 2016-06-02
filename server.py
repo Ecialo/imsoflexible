@@ -5,7 +5,7 @@ import tornado.ioloop
 from tornado import gen
 from tornado.queues import Queue
 import tornado.web
-import os, uuid, random, string
+import os, uuid, random, string, json
 from rolling_shutter import unblockable_rolling_shutter
 
 UPLOAD_DIR = "upload/"
@@ -21,10 +21,25 @@ def sid_gen():
     return ''.join(random.SystemRandom().choice(string.hexdigits) for _ in range(SID_LEN))
 
 
+def get_tasks_info(sid):
+    tasks = []
+    for task in task_list:
+        if not task["sid"] == sid:
+            continue
+        tasks.append({
+            "id": task["id"],
+            "name": task["name"],
+            "state": task["state"],
+            "progress": task["progress"],
+        })
+    return tasks
+
+
 @gen.coroutine
 def watch_queue():
     while True:
         item = yield q.get()
+        # TODO: drop failed tasks
         try:
             item["state"] = 1
             while True:
@@ -44,12 +59,7 @@ class Userform(tornado.web.RequestHandler):
 
         sid = self.get_cookie("sid")
         if sid:
-            tasks = []
-
-            for task in task_list:
-                if not task["sid"] == sid:
-                    continue
-                tasks.append(task)
+            tasks = get_tasks_info(sid)
 
         self.render("form.html", tasks=tasks)
 
@@ -98,6 +108,14 @@ class Userform(tornado.web.RequestHandler):
         self.redirect("./")
 
 
+class GetStats(tornado.web.RequestHandler):
+    def get(self):
+        sid = self.get_cookie("sid")
+        tasks = get_tasks_info(sid)
+
+        self.finish(json.dumps(tasks))
+
+
 class GetFile(tornado.web.RequestHandler):
     def get(self):
         sid = self.get_cookie("sid")
@@ -142,6 +160,7 @@ if __name__ == "__main__":
     }
     application = tornado.web.Application([
         (r"/", Userform),
+        (r"/stats", GetStats),
         (r"/file", GetFile),
         (r"/static/(.*)", tornado.web.StaticFileHandler, dict(path=settings['static_path'])),
     ], **settings)
