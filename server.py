@@ -136,10 +136,16 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--address", type=str, default='127.0.0.1')
     args = parser.parse_args()
 
-    tornado.ioloop.IOLoop.instance().add_callback(watch_queue)
+    settings = {
+        "static_path": os.path.join(os.path.dirname(__file__), "static"),
+        "debug": True,
+    }
     application = tornado.web.Application([
         (r"/", Userform),
         (r"/file", GetFile),
-    ], debug=True)
+        (r"/static/(.*)", tornado.web.StaticFileHandler, dict(path=settings['static_path'])),
+    ], **settings)
     application.listen(args.port, address=args.address)
+
+    tornado.ioloop.IOLoop.instance().add_callback(watch_queue)
     tornado.ioloop.IOLoop.instance().start()
