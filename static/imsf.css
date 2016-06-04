@@ -18,13 +18,33 @@ table#settings {
     margin: 20px auto;
 }
 
-table#settings td{
+table#settings td {
     border-style: solid;
     border-width: 0 1px;
     border-color: #0d670d;
     padding: 10px;
     text-align: center;
 }
+
+table#taskList {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table#taskList td {
+    border: 1px solid #0d670d;
+    padding: 10px;
+    text-align: center;
+}
+
+table#taskList div.fileName {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/************************/
 
 input[type="range"][orient="vertical"] {
     -webkit-appearance: slider-vertical; /* WebKit */

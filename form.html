@@ -3,13 +3,14 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <title>I'm so flexible!</title>
     <link rel="stylesheet" type="text/css" href="./static/imsf.css">
+    <script type="text/javascript" src="static/jquery-1.12.4.min.js"></script>
     <script type="text/javascript" src="static/imsf.js"></script>
 </head>
 
 <body>
 <div id="wrap">
     <h1>I'm so flexible!</h1>
-    <form enctype="multipart/form-data" action="./upload" method="post" onsubmit="onDataSubmit(event)">
+    <form enctype="multipart/form-data" action="./" method="post" onsubmit="onDataSubmit(event)">
         <input type="file" name="filearg" id="file_input" onchange="onFileSelected(event);"><label for="file_input">Choose a file…</label><br>
         <table id="settings">
             <tr><td>
@@ -24,7 +25,23 @@
         </table>
     <input type="submit" value="GO">
     </form>
-(Скоро тут еще будет блекджек и шлюхи)
+    <div id="taskListContainer">
+        <h3>Your task list:</h3>
+        <table id="taskList">
+            <tr><th style="width:150px">State</th><th>Name</th></tr>
+            {% for task in tasks %}
+                <tr id='{{ task["id"] }}'>
+                {% if task["state"] == 0 %}
+                    <td>Queueing</td><td><div class="fileName">{{ task["name"] }}</div></td>
+                {% elif task["state"] == 1 %}
+                    <td>Processing{% if task["progress"] != 0 %} ({{ task["progress"] }}%){% end %}</td><td><div class="fileName">{{ task["name"] }}</div></td>
+                {% elif task["state"] == 2 %}
+                    <td>Completed</td><td><div class="fileName"><a href='./file?id={{ task["id"] }}'>{{ task["name"] }}</a></div></td>
+                {% end %}
+                </tr>
+            {% end %}
+        </table>
+    </div>
 </div>
 </body>
 
