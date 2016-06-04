@@ -52,7 +52,7 @@ var onDataSubmit = function(event){
             var p = data[i]["progress"];
             row.firstElementChild.innerHTML = (
                 s == 0 ? "Queueing" : 
-                s == 1 ? "Processing (" + p + "%)" :
+                s == 1 ? "Processing" + (p == 0 ? "" : " (" + p + "%)") :
                 s == 2 ? "Completed" : 
                 ""
             );

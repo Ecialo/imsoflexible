@@ -34,7 +34,7 @@
                 {% if task["state"] == 0 %}
                     <td>Queueing</td><td><div class="fileName">{{ task["name"] }}</div></td>
                 {% elif task["state"] == 1 %}
-                    <td>Processing ({{ task["progress"] }}%)</td><td><div class="fileName">{{ task["name"] }}</div></td>
+                    <td>Processing{% if task["progress"] != 0 %} ({{ task["progress"] }}%){% end %}</td><td><div class="fileName">{{ task["name"] }}</div></td>
                 {% elif task["state"] == 2 %}
                     <td>Completed</td><td><div class="fileName"><a href='./file?id={{ task["id"] }}'>{{ task["name"] }}</a></div></td>
                 {% end %}
