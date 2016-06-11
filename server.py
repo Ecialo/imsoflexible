@@ -55,7 +55,7 @@ def watch_queue():
 class Userform(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self):
-        tasks = None
+        tasks = []
 
         sid = self.get_cookie("sid")
         if sid:
