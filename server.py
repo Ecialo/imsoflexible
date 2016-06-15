@@ -131,12 +131,9 @@ class GetFile(tornado.web.RequestHandler):
 
             self.set_header('Content-Type', 'application/octet-stream')
             self.set_header('Content-Disposition', 'attachment; filename=' + task["name"])
-            with open(task["dst"], 'r') as f:
-                while True:
-                    data = f.read(BUF_SIZE)
-                    if not data:
-                        break
-                    self.write(data)
+            with open(task["dst"], 'rb') as f:
+                data = f.read()
+                self.write(data)
             self.finish()
             task_list.remove(task)
             os.remove(task["src"])
