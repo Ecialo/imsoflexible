@@ -1,9 +1,12 @@
 body {
     background-color: #aed8aa;
+    margin:0;
 }
 
 div#wrap {
-    width: 500px;
+    max-width: 500px;
+    width: 100%;
+    min-width: 320px;
     margin: 40px auto;
     text-align: center;
 }
@@ -24,6 +27,10 @@ table#settings td {
     border-color: #0d670d;
     padding: 10px;
     text-align: center;
+}
+
+div#taskListContainer {
+    padding: 1px;
 }
 
 table#taskList {
