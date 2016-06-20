@@ -18,7 +18,7 @@ var onDataSubmit = function(event){
 (function (){
     
     var updateInterval = null;
-    
+
     var rebuildTaskList = function(data){
         $("#taskListContainer").css("display", data.length > 0 ? "block" : "none");
     
@@ -33,7 +33,7 @@ var onDataSubmit = function(event){
             });
             
             if (!ex){
-                table.remove(rows[i])
+                $(rows[i]).remove()
             }
         }
         
@@ -56,15 +56,33 @@ var onDataSubmit = function(event){
                 s == 2 ? "Completed" : 
                 ""
             );
-            
-            $(row).find(".fileName").html(
-                s == 2 ? "<a href='./file?id=" + data[i]["id"] + "'>" + data[i]["name"] + "</a>" : data[i]["name"]
-            );
+
+            if (s != 2){
+                $(row).find(".fileName").html(data[i]["name"]);
+            }else{
+                var ln = $("<a>", {
+                    href: "./file?id=" + data[i]["id"],
+                    text: data[i]["name"]
+                });
+                ln.click(linkClicked);
+                $(row).find(".fileName").html(ln);
+            }
             
             if (s != 2) completed = false;
         }
         
         if (completed) clearInterval(updateInterval);
+    };
+
+    var linkClicked = function(event){
+        var t = event.target;
+        $(t).closest("tr").remove();
+
+        var rows = $("#taskList").find("tr");
+        Array.prototype.shift.apply(rows); // first row is a header
+        if (rows.length == 0){
+            $("#taskListContainer").css("display", "none");
+        }
     };
     
     var downloadStats = function(){
